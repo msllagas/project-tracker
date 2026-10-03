@@ -56,6 +56,24 @@ export interface ProjectFilters {
   status?: ProjectStatus
   priority?: ProjectPriority
   sort?: ProjectSort
+  page?: number
+  per_page?: number
+}
+
+/** The `meta` block of a paginated API response. */
+export interface PaginationMeta {
+  current_page: number
+  last_page: number
+  per_page: number
+  total: number
+  /** Position of the first project on the page; null when the page is empty. */
+  from: number | null
+  to: number | null
+}
+
+export interface ProjectPage {
+  data: Project[]
+  meta: PaginationMeta
 }
 
 export interface User {

@@ -1,26 +1,45 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, useTemplateRef, watch } from 'vue'
 import { ApiError } from '@/api/client'
 import { deleteProject } from '@/api/projects'
 import AppButton from '@/components/AppButton.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import ProjectFormDialog from '@/components/projects/ProjectFormDialog.vue'
 import ProjectList from '@/components/projects/ProjectList.vue'
+import ProjectPagination from '@/components/projects/ProjectPagination.vue'
 import ProjectToolbar from '@/components/projects/ProjectToolbar.vue'
 import { useProjectFilters } from '@/composables/useProjectFilters'
 import { useProjectList } from '@/composables/useProjectList'
 import { useToast } from '@/composables/useToast'
-import type { Project } from '@/types'
+import type { Project, ProjectFilters } from '@/types'
 
 const { filters, hasActiveFilters, updateFilters, clearFilters } = useProjectFilters()
-const { projects, loading, loaded, error, reload } = useProjectList(filters)
+const { projects, pagination, loading, loaded, error, reload } = useProjectList(filters)
 const { showToast } = useToast()
 
 const summary = computed(() => {
-  const count = projects.value.length
+  const count = pagination.value?.total ?? 0
   const noun = count === 1 ? 'project' : 'projects'
 
   return hasActiveFilters.value ? `${count} matching ${noun}` : `${count} ${noun}`
+})
+
+const listSection = useTemplateRef('listSection')
+
+function changePage(changes: Pick<ProjectFilters, 'page' | 'per_page'>): void {
+  updateFilters(changes)
+
+  // Bring the top of the list back into view when paging from the bottom of a long page.
+  if (listSection.value && listSection.value.getBoundingClientRect().top < 0) {
+    listSection.value.scrollIntoView()
+  }
+}
+
+// A page can end up past the last one, for example after deleting its only project.
+watch(pagination, (meta) => {
+  if (meta && meta.current_page > meta.last_page) {
+    updateFilters({ page: meta.last_page })
+  }
 })
 
 const formOpen = ref(false)
@@ -93,7 +112,7 @@ async function deleteConfirmed(): Promise<void> {
       />
     </section>
 
-    <section class="mt-6" :aria-busy="loading">
+    <section ref="listSection" class="mt-6 scroll-mt-6" :aria-busy="loading">
       <div
         v-if="error"
         role="alert"
@@ -107,7 +126,7 @@ async function deleteConfirmed(): Promise<void> {
       <p v-else-if="!loaded" class="py-16 text-center text-muted">Loading projects…</p>
 
       <div
-        v-else-if="projects.length === 0"
+        v-else-if="pagination?.total === 0"
         class="flex flex-col items-center gap-2 rounded-md border border-dashed border-rule px-6 py-16 text-center"
       >
         <template v-if="hasActiveFilters">
@@ -131,6 +150,13 @@ async function deleteConfirmed(): Promise<void> {
       >
         <ProjectList :projects="projects" @edit="openEditForm" @delete="confirmDelete" />
       </div>
+
+      <ProjectPagination
+        v-if="pagination"
+        class="mt-4"
+        :pagination="pagination"
+        @update="changePage"
+      />
     </section>
 
     <ProjectFormDialog

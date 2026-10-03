@@ -4,16 +4,16 @@ import { ref } from 'vue'
 import { ApiError } from '@/api/client'
 import { listProjects } from '@/api/projects'
 import { useProjectList } from '@/composables/useProjectList'
-import { makeProject } from '@/test/factories'
-import type { Project, ProjectFilters } from '@/types'
+import { makePage, makeProject } from '@/test/factories'
+import type { ProjectFilters, ProjectPage } from '@/types'
 
 vi.mock('@/api/projects', () => ({ listProjects: vi.fn() }))
 
 const listProjectsMock = vi.mocked(listProjects)
 
 function deferred() {
-  let resolve!: (projects: Project[]) => void
-  const promise = new Promise<Project[]>((settle) => (resolve = settle))
+  let resolve!: (page: ProjectPage) => void
+  const promise = new Promise<ProjectPage>((settle) => (resolve = settle))
 
   return { promise, resolve }
 }
@@ -23,15 +23,16 @@ beforeEach(() => {
 })
 
 describe('useProjectList', () => {
-  it('loads the projects for the current filters', async () => {
-    const projects = [makeProject()]
-    listProjectsMock.mockResolvedValue(projects)
+  it('loads the page of projects for the current filters', async () => {
+    const page = makePage([makeProject()], { current_page: 2, last_page: 2, total: 11 })
+    listProjectsMock.mockResolvedValue(page)
 
-    const list = useProjectList(ref<ProjectFilters>({ status: 'planning' }))
+    const list = useProjectList(ref<ProjectFilters>({ status: 'planning', page: 2 }))
     await flushPromises()
 
-    expect(listProjectsMock).toHaveBeenCalledWith({ status: 'planning' })
-    expect(list.projects.value).toEqual(projects)
+    expect(listProjectsMock).toHaveBeenCalledWith({ status: 'planning', page: 2 })
+    expect(list.projects.value).toEqual(page.data)
+    expect(list.pagination.value).toEqual(page.meta)
     expect(list.loaded.value).toBe(true)
   })
 
@@ -45,9 +46,9 @@ describe('useProjectList', () => {
     const list = useProjectList(filters)
     filters.value = { search: 'ac' }
     await flushPromises()
-    fast.resolve(latest)
+    fast.resolve(makePage(latest))
     await flushPromises()
-    slow.resolve([makeProject({ name: 'Stale' })])
+    slow.resolve(makePage([makeProject({ name: 'Stale' })]))
     await flushPromises()
 
     expect(list.projects.value).toEqual(latest)

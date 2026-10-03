@@ -1,11 +1,12 @@
 import { ref, watch, type Ref } from 'vue'
 import { ApiError } from '@/api/client'
 import { listProjects } from '@/api/projects'
-import type { Project, ProjectFilters } from '@/types'
+import type { PaginationMeta, Project, ProjectFilters } from '@/types'
 
-/** Load the project list and reload it whenever the filters change. */
+/** Load a page of projects and reload it whenever the filters change. */
 export function useProjectList(filters: Ref<ProjectFilters>) {
   const projects = ref<Project[]>([])
+  const pagination = ref<PaginationMeta | null>(null)
   const loading = ref(false)
   const loaded = ref(false)
   const error = ref<ApiError | null>(null)
@@ -22,7 +23,8 @@ export function useProjectList(filters: Ref<ProjectFilters>) {
 
       // Ignore responses that arrive after a newer request was made.
       if (request === latestRequest) {
-        projects.value = result
+        projects.value = result.data
+        pagination.value = result.meta
         loaded.value = true
       }
     } catch (caught) {
@@ -39,5 +41,5 @@ export function useProjectList(filters: Ref<ProjectFilters>) {
 
   watch(filters, load, { immediate: true })
 
-  return { projects, loading, loaded, error, reload: load }
+  return { projects, pagination, loading, loaded, error, reload: load }
 }

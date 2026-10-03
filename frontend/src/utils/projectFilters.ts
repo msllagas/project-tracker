@@ -10,6 +10,10 @@ import {
 
 export const DEFAULT_SORT: ProjectSort = '-created_at'
 
+export const PER_PAGE_OPTIONS = [10, 15, 25, 50] as const
+
+export const DEFAULT_PER_PAGE = 10
+
 export const SORT_OPTIONS: { value: ProjectSort; label: string }[] = [
   { value: '-created_at', label: 'Newest first' },
   { value: 'due_date', label: 'Due date, soonest first' },
@@ -27,6 +31,14 @@ function firstString(value: LocationQuery[string]): string | undefined {
   return typeof first === 'string' && first.trim() !== '' ? first.trim() : undefined
 }
 
+function positiveInteger(value: string | undefined): number | undefined {
+  const number = Number(value)
+
+  return value && /^\d+$/.test(value) && Number.isSafeInteger(number) && number > 0
+    ? number
+    : undefined
+}
+
 function oneOf<T extends string>(allowed: readonly T[], value: string | undefined): T | undefined {
   return allowed.find((option) => option === value)
 }
@@ -34,7 +46,9 @@ function oneOf<T extends string>(allowed: readonly T[], value: string | undefine
 /** Read filters from the URL, ignoring anything the API would reject. */
 export function filtersFromQuery(
   query: LocationQuery,
-): Required<Pick<ProjectFilters, 'sort'>> & ProjectFilters {
+): Required<Pick<ProjectFilters, 'sort' | 'page' | 'per_page'>> & ProjectFilters {
+  const perPage = positiveInteger(firstString(query.per_page))
+
   return {
     search: firstString(query.search),
     status: oneOf<ProjectStatus>(PROJECT_STATUSES, firstString(query.status)),
@@ -44,10 +58,12 @@ export function filtersFromQuery(
         SORT_OPTIONS.map((option) => option.value),
         firstString(query.sort),
       ) ?? DEFAULT_SORT,
+    page: positiveInteger(firstString(query.page)) ?? 1,
+    per_page: PER_PAGE_OPTIONS.find((option) => option === perPage) ?? DEFAULT_PER_PAGE,
   }
 }
 
-/** Write filters to the URL, leaving out empty values and the default sort. */
+/** Write filters to the URL, leaving out empty values and defaults. */
 export function filtersToQuery(filters: ProjectFilters): LocationQueryRaw {
   const query: LocationQueryRaw = {}
 
@@ -55,6 +71,8 @@ export function filtersToQuery(filters: ProjectFilters): LocationQueryRaw {
   if (filters.status) query.status = filters.status
   if (filters.priority) query.priority = filters.priority
   if (filters.sort && filters.sort !== DEFAULT_SORT) query.sort = filters.sort
+  if (filters.page && filters.page > 1) query.page = filters.page
+  if (filters.per_page && filters.per_page !== DEFAULT_PER_PAGE) query.per_page = filters.per_page
 
   return query
 }

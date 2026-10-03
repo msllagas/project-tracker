@@ -14,13 +14,16 @@ export function useProjectFilters() {
     Boolean(filters.value.search || filters.value.status || filters.value.priority),
   )
 
+  /** Apply changes; anything other than a page change starts again from the first page. */
   function updateFilters(changes: Partial<ProjectFilters>): void {
-    void router.replace({ query: filtersToQuery({ ...filters.value, ...changes }) })
+    void router.replace({ query: filtersToQuery({ ...filters.value, page: 1, ...changes }) })
   }
 
-  /** Clear search, status and priority but keep the chosen sort order. */
+  /** Clear search, status and priority but keep the sort order and page size. */
   function clearFilters(): void {
-    void router.replace({ query: filtersToQuery({ sort: filters.value.sort }) })
+    const { sort, per_page } = filters.value
+
+    void router.replace({ query: filtersToQuery({ sort, per_page }) })
   }
 
   return { filters, hasActiveFilters, updateFilters, clearFilters }
