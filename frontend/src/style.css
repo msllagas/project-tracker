@@ -18,6 +18,12 @@
     @apply bg-paper font-sans text-ink antialiased;
   }
 
+  /* Tailwind resets buttons to the default cursor; show they are clickable. */
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+
   /* Two-tone ring: ink reads on light surfaces, marigold on the ink header. */
   :focus-visible {
     outline: 2px solid var(--color-ink);

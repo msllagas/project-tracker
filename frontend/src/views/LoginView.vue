@@ -78,8 +78,8 @@ async function submit(): Promise<void> {
         />
       </FormField>
 
-      <label class="flex items-center gap-2 text-sm">
-        <input v-model="form.remember" type="checkbox" class="size-4 accent-ink" />
+      <label class="flex cursor-pointer items-center gap-2 self-start text-sm">
+        <input v-model="form.remember" type="checkbox" class="size-4 cursor-pointer accent-ink" />
         Keep me logged in
       </label>
 
