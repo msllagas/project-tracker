@@ -20,12 +20,12 @@ const actionClass = 'rounded-md px-2 py-1 text-sm font-semibold underline-offset
   <table class="hidden w-full text-left md:table">
     <thead class="border-b border-rule text-sm text-muted">
       <tr>
-        <th scope="col" class="py-3 pr-4 font-medium">Project</th>
-        <th scope="col" class="px-4 py-3 font-medium">Status</th>
-        <th scope="col" class="px-4 py-3 font-medium">Priority</th>
-        <th scope="col" class="px-4 py-3 font-medium">Start date</th>
-        <th scope="col" class="px-4 py-3 font-medium">Due date</th>
-        <th scope="col" class="py-3 pl-4"><span class="sr-only">Actions</span></th>
+        <th scope="col" class="py-3 pr-4 font-bold">Project</th>
+        <th scope="col" class="px-4 py-3 font-bold">Status</th>
+        <th scope="col" class="px-4 py-3 font-bold">Priority</th>
+        <th scope="col" class="px-4 py-3 font-bold">Start date</th>
+        <th scope="col" class="px-4 py-3 font-bold">Due date</th>
+        <th scope="col" class="py-3 pl-4 text-right font-bold">Actions</th>
       </tr>
     </thead>
     <tbody class="divide-y divide-rule">
