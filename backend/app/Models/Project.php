@@ -41,6 +41,25 @@ class Project extends Model
     }
 
     /**
+     * Resolve a project from a route parameter.
+     *
+     * IDs that are not positive integers (such as "abc", or numbers too large
+     * for the column) are rejected before they reach PostgreSQL, which would
+     * otherwise fail with a server error; they result in a 404 instead.
+     *
+     * @param  mixed  $value
+     * @param  string|null  $field
+     */
+    public function resolveRouteBinding($value, $field = null): ?self
+    {
+        if ($field === null && filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
+            return null;
+        }
+
+        return parent::resolveRouteBinding($value, $field);
+    }
+
+    /**
      * Match projects whose client or project name contains the given term.
      *
      * @param  Builder<self>  $query

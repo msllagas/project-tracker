@@ -29,6 +29,16 @@ it('returns 401 for unauthenticated requests', function (string $method, string 
     'delete' => ['DELETE', '/api/projects/1'],
 ]);
 
+it('returns 404 for project ids that are not positive integers', function (string $method, string $id) {
+    $response = $this->actingAs(User::factory()->create())->json($method, "/api/projects/{$id}", validProjectPayload());
+
+    $response->assertNotFound()->assertExactJson(['message' => 'Project not found.']);
+})->with(['show' => 'GET', 'update' => 'PUT', 'delete' => 'DELETE'])->with([
+    'text' => 'abc',
+    'zero' => '0',
+    'too large for the column' => '99999999999999999999',
+]);
+
 describe('index', function () {
     it('lists the projects with pagination details', function () {
         $projects = Project::factory()->count(3)->create();
