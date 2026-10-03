@@ -30,4 +30,10 @@
   .field-control {
     @apply block w-full rounded-md border border-rule bg-white px-3 py-2 text-ink transition-colors placeholder:text-muted/70 hover:border-ink/40 aria-invalid:border-alert;
   }
+
+  /* Browsers size text inputs and selects differently; keep single-line controls aligned. */
+  input.field-control,
+  select.field-control {
+    @apply h-10.5;
+  }
 }
