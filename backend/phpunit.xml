@@ -32,5 +32,9 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <!-- Laravel reads $_SERVER first, where real environment variables (e.g. from Docker) live. -->
+        <server name="APP_ENV" value="testing"/>
+        <server name="DB_CONNECTION" value="pgsql"/>
+        <server name="DB_DATABASE" value="backend_test"/>
     </php>
 </phpunit>
