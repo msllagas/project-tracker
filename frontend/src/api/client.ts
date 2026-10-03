@@ -65,6 +65,21 @@ async function send(method: HttpMethod, path: string, body?: unknown): Promise<R
   })
 }
 
+/** A message for people rather than the server's own wording, for errors they can't fix. */
+function friendlyMessage(response: Response): string | undefined {
+  if (response.status === 429) {
+    const seconds = Number(response.headers.get('Retry-After'))
+
+    return seconds > 0
+      ? `Too many requests. Try again in ${seconds} ${seconds === 1 ? 'second' : 'seconds'}.`
+      : 'Too many requests. Wait a moment and try again.'
+  }
+
+  if (response.status >= 500) {
+    return 'Something went wrong on the server. Try again in a moment.'
+  }
+}
+
 async function toApiError(response: Response): Promise<ApiError> {
   const payload = (await response.json().catch(() => ({}))) as {
     message?: string
@@ -73,7 +88,7 @@ async function toApiError(response: Response): Promise<ApiError> {
 
   return new ApiError(
     response.status,
-    payload.message || response.statusText || 'Something went wrong.',
+    friendlyMessage(response) || payload.message || response.statusText || 'Something went wrong.',
     payload.errors,
   )
 }

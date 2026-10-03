@@ -133,4 +133,29 @@ describe('request', () => {
       message: 'Unable to reach the server. Check your connection and try again.',
     })
   })
+
+  it('explains a rate limit with the wait time', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ message: 'Too Many Attempts.' }), {
+        status: 429,
+        headers: { 'Content-Type': 'application/json', 'Retry-After': '42' },
+      }),
+    )
+
+    await expect(request('GET', '/projects')).rejects.toMatchObject({
+      status: 429,
+      message: 'Too many requests. Try again in 42 seconds.',
+    })
+  })
+
+  it('hides server error details from the user', async () => {
+    fetchMock.mockResolvedValue(
+      json(500, { message: 'SQLSTATE[22P02]: Invalid text representation' }),
+    )
+
+    await expect(request('GET', '/projects')).rejects.toMatchObject({
+      status: 500,
+      message: 'Something went wrong on the server. Try again in a moment.',
+    })
+  })
 })
