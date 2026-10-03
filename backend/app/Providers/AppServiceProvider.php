@@ -27,7 +27,7 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Throttle authentication attempts to slow down brute-force attacks.
+     * Throttle login attempts to slow down brute-force attacks.
      */
     protected function configureRateLimiting(): void
     {
@@ -35,10 +35,6 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(5)->by(
                 Str::transliterate(Str::lower($request->string('email')).'|'.$request->ip())
             );
-        });
-
-        RateLimiter::for('register', function (Request $request): Limit {
-            return Limit::perMinute(5)->by($request->ip());
         });
     }
 }
