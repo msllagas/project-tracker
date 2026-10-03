@@ -34,6 +34,7 @@ services:
       retries: 20
 
   backend:
+    image: project-tracker-backend:prod
     build:
       context: ./backend
       target: prod
@@ -53,6 +54,7 @@ services:
       retries: 40
 
   frontend:
+    image: project-tracker-frontend:prod
     build:
       context: ./frontend
       target: prod
@@ -66,6 +68,7 @@ services:
   #   docker compose run --rm backend-test
   backend-test:
     profiles: [test]
+    image: project-tracker-backend:dev
     build:
       context: ./backend
       target: dev
