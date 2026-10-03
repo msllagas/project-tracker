@@ -1,0 +1,28 @@
+# Development overrides: hot reload for both apps, source code mounted from the host.
+#   docker compose -f compose.yaml -f compose.dev.yaml up --build
+# Then open http://localhost:5173
+
+services:
+  backend:
+    build:
+      target: dev
+    # Run as the host user so files written to the bind mount stay editable.
+    user: "${UID:-1000}:${GID:-1000}"
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+    volumes:
+      - ./backend:/var/www/html
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 8000"]
+
+  frontend:
+    build:
+      target: dev
+    environment:
+      API_PROXY_TARGET: http://backend:8000
+    ports: !override
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules

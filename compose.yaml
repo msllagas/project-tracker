@@ -1,0 +1,83 @@
+# Production-like stack: `docker compose up --build`, then open http://localhost:5173
+# Development stack with hot reload: add `-f compose.dev.yaml` (see that file).
+
+name: project-tracker
+
+x-backend-environment: &backend-environment
+  APP_NAME: Project Tracker
+  APP_URL: http://localhost:5173
+  DB_CONNECTION: pgsql
+  DB_HOST: db
+  DB_PORT: 5432
+  DB_DATABASE: backend
+  DB_USERNAME: tracker
+  DB_PASSWORD: tracker
+  LOG_CHANNEL: stderr
+  SESSION_DRIVER: database
+  CACHE_STORE: database
+  QUEUE_CONNECTION: database
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: backend
+      POSTGRES_USER: tracker
+      POSTGRES_PASSWORD: tracker
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./docker/postgres/create-test-database.sql:/docker-entrypoint-initdb.d/create-test-database.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tracker -d backend"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    build:
+      context: ./backend
+      target: prod
+    environment:
+      <<: *backend-environment
+      APP_ENV: production
+      APP_DEBUG: "false"
+    volumes:
+      - app-data:/var/lib/app
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 9000"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+
+  frontend:
+    build:
+      context: ./frontend
+      target: prod
+    ports:
+      - "5173:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  # Runs the backend test suite against the backend_test database:
+  #   docker compose run --rm backend-test
+  backend-test:
+    profiles: [test]
+    build:
+      context: ./backend
+      target: dev
+    environment:
+      <<: *backend-environment
+      DB_DATABASE: backend_test
+    working_dir: /var/www/html
+    entrypoint: ["sh", "-c", "cp .env.example .env && php artisan key:generate --force && exec php artisan test"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db-data:
+  app-data:
