@@ -84,7 +84,14 @@ async function deleteConfirmed(): Promise<void> {
     showToast('Project deleted.')
     void reload()
   } catch (caught) {
-    deleteError.value = caught instanceof ApiError ? caught.message : 'Something went wrong.'
+    if (caught instanceof ApiError && caught.status === 404) {
+      // Someone else deleted it first; the list is out of date.
+      projectToDelete.value = null
+      showToast('That project had already been deleted.')
+      void reload()
+    } else {
+      deleteError.value = caught instanceof ApiError ? caught.message : 'Something went wrong.'
+    }
   } finally {
     deleting.value = false
   }
