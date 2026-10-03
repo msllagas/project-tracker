@@ -6,6 +6,13 @@ import type { Project } from '@/types'
 import { formatDate } from '@/utils/dates'
 
 defineProps<{ projects: Project[] }>()
+
+const emit = defineEmits<{
+  edit: [project: Project]
+  delete: [project: Project]
+}>()
+
+const actionClass = 'rounded-md px-2 py-1 text-sm font-semibold underline-offset-2 hover:underline'
 </script>
 
 <template>
@@ -17,7 +24,8 @@ defineProps<{ projects: Project[] }>()
         <th scope="col" class="px-4 py-3 font-medium">Status</th>
         <th scope="col" class="px-4 py-3 font-medium">Priority</th>
         <th scope="col" class="px-4 py-3 font-medium">Start date</th>
-        <th scope="col" class="py-3 pl-4 font-medium">Due date</th>
+        <th scope="col" class="px-4 py-3 font-medium">Due date</th>
+        <th scope="col" class="py-3 pl-4"><span class="sr-only">Actions</span></th>
       </tr>
     </thead>
     <tbody class="divide-y divide-rule">
@@ -31,7 +39,27 @@ defineProps<{ projects: Project[] }>()
         <td class="px-4 py-4 text-sm whitespace-nowrap tabular-nums">
           {{ formatDate(project.start_date) }}
         </td>
-        <td class="py-4 pl-4 text-sm whitespace-nowrap"><DueDate :project="project" /></td>
+        <td class="px-4 py-4 text-sm whitespace-nowrap"><DueDate :project="project" /></td>
+        <td class="py-3 pl-4">
+          <div class="flex justify-end gap-1">
+            <button
+              type="button"
+              :class="actionClass"
+              :aria-label="`Edit ${project.name}`"
+              @click="emit('edit', project)"
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              :class="[actionClass, 'text-alert']"
+              :aria-label="`Delete ${project.name}`"
+              @click="emit('delete', project)"
+            >
+              Delete
+            </button>
+          </div>
+        </td>
       </tr>
     </tbody>
   </table>
@@ -59,6 +87,24 @@ defineProps<{ projects: Project[] }>()
           <dd><DueDate :project="project" /></dd>
         </div>
       </dl>
+      <div class="mt-3 flex gap-2 border-t border-rule pt-3">
+        <button
+          type="button"
+          :class="actionClass"
+          :aria-label="`Edit ${project.name}`"
+          @click="emit('edit', project)"
+        >
+          Edit
+        </button>
+        <button
+          type="button"
+          :class="[actionClass, 'text-alert']"
+          :aria-label="`Delete ${project.name}`"
+          @click="emit('delete', project)"
+        >
+          Delete
+        </button>
+      </div>
     </li>
   </ul>
 </template>
