@@ -307,3 +307,52 @@ describe('destroy', function () {
         $this->actingAs(User::factory()->create())->deleteJson('/api/projects/999')->assertNotFound();
     });
 });
+
+describe('list cache', function () {
+    it('keeps serving the cached list until a project changes through the API', function () {
+        $project = Project::factory()->create(['name' => 'Website Redesign']);
+        $this->actingAs(User::factory()->create())->getJson('/api/projects');
+
+        // Changes made outside the API do not clear the cache, and it never expires.
+        $project->updateQuietly(['name' => 'Changed Directly']);
+        $this->travel(1)->year();
+
+        expect($this->getJson('/api/projects')->json('data.0.name'))->toBe('Website Redesign');
+    });
+
+    it('caches each page and filter separately', function () {
+        Project::factory()->create(['status' => 'planning']);
+        Project::factory()->count(2)->create(['status' => 'completed']);
+        $this->actingAs(User::factory()->create());
+
+        $this->getJson('/api/projects?status=planning')->assertJsonCount(1, 'data');
+        $this->getJson('/api/projects?status=completed')->assertJsonCount(2, 'data');
+        $this->getJson('/api/projects?status=completed&per_page=1&page=2')->assertJsonCount(1, 'data');
+    });
+
+    it('refreshes the list after a project is created', function () {
+        $this->actingAs(User::factory()->create())->getJson('/api/projects')->assertJsonCount(0, 'data');
+
+        $this->postJson('/api/projects', validProjectPayload())->assertCreated();
+
+        $this->getJson('/api/projects')->assertJsonCount(1, 'data');
+    });
+
+    it('refreshes the list after a project is updated', function () {
+        $project = Project::factory()->create();
+        $this->actingAs(User::factory()->create())->getJson('/api/projects');
+
+        $this->putJson("/api/projects/{$project->id}", validProjectPayload(['name' => 'Renamed']))->assertOk();
+
+        expect($this->getJson('/api/projects')->json('data.0.name'))->toBe('Renamed');
+    });
+
+    it('refreshes the list after a project is deleted', function () {
+        $project = Project::factory()->create();
+        $this->actingAs(User::factory()->create())->getJson('/api/projects')->assertJsonCount(1, 'data');
+
+        $this->deleteJson("/api/projects/{$project->id}")->assertNoContent();
+
+        $this->getJson('/api/projects')->assertJsonCount(0, 'data');
+    });
+});
