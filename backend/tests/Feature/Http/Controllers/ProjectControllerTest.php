@@ -38,6 +38,88 @@ describe('index', function () {
         $response->assertOk()->assertJsonCount(3, 'data');
         expect($response->json('data.*.id'))->toEqualCanonicalizing($projects->pluck('id')->all());
     });
+
+    it('lists the newest projects first by default', function () {
+        $older = Project::factory()->create(['created_at' => now()->subDay()]);
+        $newer = Project::factory()->create(['created_at' => now()]);
+
+        $response = $this->actingAs(User::factory()->create())->getJson('/api/projects');
+
+        expect($response->json('data.*.id'))->toBe([$newer->id, $older->id]);
+    });
+
+    it('searches client and project names case-insensitively', function () {
+        $byClient = Project::factory()->create(['client_name' => 'Globex Corporation', 'name' => 'SEO Audit']);
+        $byName = Project::factory()->create(['client_name' => 'Initech', 'name' => 'Globex Rebrand']);
+        Project::factory()->create(['client_name' => 'Initrode', 'name' => 'Brand Refresh']);
+
+        $response = $this->actingAs(User::factory()->create())->getJson('/api/projects?search=gLoBeX');
+
+        expect($response->json('data.*.id'))->toEqualCanonicalizing([$byClient->id, $byName->id]);
+    });
+
+    it('filters by status and priority', function () {
+        $match = Project::factory()->create(['status' => 'on_hold', 'priority' => 'high']);
+        Project::factory()->create(['status' => 'on_hold', 'priority' => 'low']);
+        Project::factory()->create(['status' => 'planning', 'priority' => 'high']);
+
+        $response = $this->actingAs(User::factory()->create())->getJson('/api/projects?status=on_hold&priority=high');
+
+        expect($response->json('data.*.id'))->toBe([$match->id]);
+    });
+
+    it('sorts by priority from most to least important', function () {
+        $medium = Project::factory()->create(['priority' => 'medium']);
+        $high = Project::factory()->create(['priority' => 'high']);
+        $low = Project::factory()->create(['priority' => 'low']);
+
+        $response = $this->actingAs(User::factory()->create())->getJson('/api/projects?sort=-priority');
+
+        expect($response->json('data.*.id'))->toBe([$high->id, $medium->id, $low->id]);
+    });
+
+    it('sorts by status in workflow order', function () {
+        $completed = Project::factory()->create(['status' => 'completed']);
+        $planning = Project::factory()->create(['status' => 'planning']);
+        $onHold = Project::factory()->create(['status' => 'on_hold']);
+        $inProgress = Project::factory()->create(['status' => 'in_progress']);
+
+        $response = $this->actingAs(User::factory()->create())->getJson('/api/projects?sort=status');
+
+        expect($response->json('data.*.id'))->toBe([$planning->id, $inProgress->id, $onHold->id, $completed->id]);
+    });
+
+    it('lists projects without a due date last in either direction', function (string $sort, array $expectedOrder) {
+        $projects = [
+            'none' => Project::factory()->create(['start_date' => null, 'due_date' => null]),
+            'early' => Project::factory()->create(['start_date' => null, 'due_date' => '2026-11-01']),
+            'late' => Project::factory()->create(['start_date' => null, 'due_date' => '2026-12-01']),
+        ];
+
+        $response = $this->actingAs(User::factory()->create())->getJson("/api/projects?sort={$sort}");
+
+        expect($response->json('data.*.id'))->toBe(array_map(fn (string $key): int => $projects[$key]->id, $expectedOrder));
+    })->with([
+        'ascending' => ['due_date', ['early', 'late', 'none']],
+        'descending' => ['-due_date', ['late', 'early', 'none']],
+    ]);
+
+    it('returns 422 when a filter value is invalid', function () {
+        $response = $this->actingAs(User::factory()->create())->getJson('/api/projects?status=archived&priority=urgent');
+
+        $response->assertUnprocessable()->assertJsonValidationErrors([
+            'status' => 'The status must be one of: planning, in_progress, on_hold, completed.',
+            'priority' => 'The priority must be one of: low, medium, high.',
+        ]);
+    });
+
+    it('returns 422 when the sort column is not allowed', function () {
+        $response = $this->actingAs(User::factory()->create())->getJson('/api/projects?sort=id;drop table projects');
+
+        $response->assertUnprocessable()->assertJsonValidationErrors([
+            'sort' => 'The sort must be one of: client_name, name, status, priority, start_date, due_date, created_at. Prefix with "-" for descending order.',
+        ]);
+    });
 });
 
 describe('show', function () {
