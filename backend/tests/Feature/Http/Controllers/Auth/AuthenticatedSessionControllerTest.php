@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use Laravel\Sanctum\Sanctum;
 
 describe('login', function () {
     it('logs the user in and returns their profile', function () {
@@ -37,6 +38,19 @@ describe('login', function () {
             'email' => 'The email field is required.',
             'password' => 'The password field is required.',
         ]);
+    });
+
+    it('returns 403 when the request does not come from the frontend', function () {
+        $user = User::factory()->create();
+
+        $response = $this->withoutHeader('Origin')->postJson('/api/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $response->assertForbidden()
+            ->assertExactJson(['message' => 'This endpoint only accepts requests from the frontend application.']);
+        $this->assertGuest('web');
     });
 
     it('returns 429 after too many failed attempts', function () {
@@ -79,5 +93,14 @@ describe('logout', function () {
 
     it('returns 401 when not authenticated', function () {
         $this->postJson('/api/logout')->assertUnauthorized();
+    });
+
+    it('returns 403 when the request does not come from the frontend', function () {
+        Sanctum::actingAs(User::factory()->create());
+
+        $response = $this->withoutHeader('Origin')->postJson('/api/logout');
+
+        $response->assertForbidden()
+            ->assertExactJson(['message' => 'This endpoint only accepts requests from the frontend application.']);
     });
 });

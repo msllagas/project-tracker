@@ -57,3 +57,16 @@ it('returns 422 when the password confirmation does not match', function () {
         ->assertJsonValidationErrors(['password' => 'The password field confirmation does not match.']);
     $this->assertGuest('web');
 });
+
+it('returns 403 when the request does not come from the frontend', function () {
+    $response = $this->withoutHeader('Origin')->postJson('/api/register', [
+        'name' => 'Jane Doe',
+        'email' => 'jane@example.com',
+        'password' => 'secret-password',
+        'password_confirmation' => 'secret-password',
+    ]);
+
+    $response->assertForbidden()
+        ->assertExactJson(['message' => 'This endpoint only accepts requests from the frontend application.']);
+    $this->assertDatabaseCount('users', 0);
+});
