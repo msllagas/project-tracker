@@ -310,6 +310,32 @@ describe('update', function () {
         expect($project->fresh()->name)->toBe('Website Redesign');
     });
 
+    it('returns 422 when required fields are missing', function () {
+        $project = Project::factory()->create();
+
+        $response = $this->actingAs(User::factory()->create())->putJson("/api/projects/{$project->id}", []);
+
+        $response->assertUnprocessable()->assertJsonValidationErrors([
+            'client_name' => 'The client name field is required.',
+            'name' => 'The project name field is required.',
+            'status' => 'The status field is required.',
+            'priority' => 'The priority field is required.',
+        ]);
+    });
+
+    it('returns 422 when a field is invalid', function (array $overrides, array $errors) {
+        $project = Project::factory()->create();
+
+        $response = $this->actingAs(User::factory()->create())
+            ->putJson("/api/projects/{$project->id}", validProjectPayload($overrides));
+
+        $response->assertUnprocessable()->assertJsonValidationErrors($errors);
+    })->with([
+        'status' => [['status' => 'archived'], ['status' => 'The status must be one of: planning, in_progress, on_hold, completed.']],
+        'priority' => [['priority' => 'urgent'], ['priority' => 'The priority must be one of: low, medium, high.']],
+        'date' => [['start_date' => '2026-02-30'], ['start_date' => 'The start date must be a valid date in the YYYY-MM-DD format.']],
+    ]);
+
     it('returns 404 when the project does not exist', function () {
         $this->actingAs(User::factory()->create())
             ->putJson('/api/projects/999', validProjectPayload())
