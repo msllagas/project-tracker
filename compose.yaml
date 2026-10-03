@@ -81,6 +81,16 @@ services:
       db:
         condition: service_healthy
 
+  # Runs the frontend unit tests:
+  #   docker compose run --rm frontend-test
+  frontend-test:
+    profiles: [test]
+    image: project-tracker-frontend:dev
+    build:
+      context: ./frontend
+      target: dev
+    command: ["npm", "run", "test"]
+
 volumes:
   db-data:
   app-data:
