@@ -39,6 +39,16 @@ it('returns 404 for project ids that are not positive integers', function (strin
     'too large for the column' => '99999999999999999999',
 ]);
 
+it('returns 429 after 60 requests a minute from the same user', function () {
+    $this->actingAs(User::factory()->create());
+
+    foreach (range(1, 60) as $attempt) {
+        $this->getJson('/api/projects')->assertOk();
+    }
+
+    $this->getJson('/api/projects')->assertTooManyRequests()->assertHeader('Retry-After');
+});
+
 describe('index', function () {
     it('lists the projects with pagination details', function () {
         $projects = Project::factory()->count(3)->create();
