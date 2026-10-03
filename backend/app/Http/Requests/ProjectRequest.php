@@ -54,6 +54,8 @@ class ProjectRequest extends FormRequest
         return [
             'status.enum' => 'The status must be one of: '.implode(', ', array_column(ProjectStatus::cases(), 'value')).'.',
             'priority.enum' => 'The priority must be one of: '.implode(', ', array_column(ProjectPriority::cases(), 'value')).'.',
+            'start_date.date_format' => 'The start date must be a valid date in the YYYY-MM-DD format.',
+            'due_date.date_format' => 'The due date must be a valid date in the YYYY-MM-DD format.',
             'due_date.after_or_equal' => 'The due date cannot be earlier than the start date.',
         ];
     }

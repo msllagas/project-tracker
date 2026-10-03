@@ -273,14 +273,18 @@ describe('store', function () {
         $this->assertDatabaseCount('projects', 0);
     });
 
-    it('returns 422 when a date is not in Y-m-d format', function () {
+    it('returns 422 when a date is not a valid Y-m-d date', function (string $date) {
         $response = $this->actingAs(User::factory()->create())
-            ->postJson('/api/projects', validProjectPayload(['start_date' => '10/01/2026']));
+            ->postJson('/api/projects', validProjectPayload(['start_date' => $date, 'due_date' => $date]));
 
         $response->assertUnprocessable()->assertJsonValidationErrors([
-            'start_date' => 'The start date field must match the format Y-m-d.',
+            'start_date' => 'The start date must be a valid date in the YYYY-MM-DD format.',
+            'due_date' => 'The due date must be a valid date in the YYYY-MM-DD format.',
         ]);
-    });
+    })->with([
+        'other format' => '10/01/2026',
+        'impossible date' => '2026-02-30',
+    ]);
 });
 
 describe('update', function () {
