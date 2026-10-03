@@ -52,7 +52,9 @@ describe('show', function () {
     });
 
     it('returns 404 when the project does not exist', function () {
-        $this->actingAs(User::factory()->create())->getJson('/api/projects/999')->assertNotFound();
+        $response = $this->actingAs(User::factory()->create())->getJson('/api/projects/999');
+
+        $response->assertNotFound()->assertExactJson(['message' => 'Project not found.']);
     });
 });
 
