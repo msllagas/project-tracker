@@ -30,14 +30,54 @@ it('returns 401 for unauthenticated requests', function (string $method, string 
 ]);
 
 describe('index', function () {
-    it('lists all projects', function () {
+    it('lists the projects with pagination details', function () {
         $projects = Project::factory()->count(3)->create();
 
         $response = $this->actingAs(User::factory()->create())->getJson('/api/projects');
 
-        $response->assertOk()->assertJsonCount(3, 'data');
+        $response->assertOk()
+            ->assertJsonCount(3, 'data')
+            ->assertJson(['meta' => ['current_page' => 1, 'last_page' => 1, 'per_page' => 10, 'total' => 3]]);
         expect($response->json('data.*.id'))->toEqualCanonicalizing($projects->pluck('id')->all());
     });
+
+    it('lists 10 projects per page by default', function () {
+        Project::factory()->count(12)->create();
+
+        $response = $this->actingAs(User::factory()->create())->getJson('/api/projects');
+
+        $response->assertJsonCount(10, 'data')
+            ->assertJson(['meta' => ['per_page' => 10, 'last_page' => 2, 'total' => 12]]);
+    });
+
+    it('returns the requested page with the requested page size', function () {
+        $projects = collect(range(1, 7))
+            ->map(fn (int $day) => Project::factory()->create(['created_at' => now()->subDays($day)]));
+
+        $response = $this->actingAs(User::factory()->create())->getJson('/api/projects?per_page=3&page=2');
+
+        $response->assertJson(['meta' => ['current_page' => 2, 'last_page' => 3, 'from' => 4, 'to' => 6, 'total' => 7]]);
+        expect($response->json('data.*.id'))->toBe($projects->slice(3, 3)->pluck('id')->values()->all());
+    });
+
+    it('keeps the filters in the page links', function () {
+        Project::factory()->count(3)->create(['status' => 'planning']);
+
+        $response = $this->actingAs(User::factory()->create())->getJson('/api/projects?status=planning&per_page=1');
+
+        expect($response->json('links.next'))->toContain('status=planning')->toContain('per_page=1')->toContain('page=2');
+    });
+
+    it('returns 422 when the page or page size is invalid', function (string $query, array $errors) {
+        $response = $this->actingAs(User::factory()->create())->getJson("/api/projects?{$query}");
+
+        $response->assertUnprocessable()->assertJsonValidationErrors($errors);
+    })->with([
+        'page below 1' => ['page=0', ['page' => 'The page field must be at least 1.']],
+        'page size of 0' => ['per_page=0', ['per_page' => 'The per page field must be between 1 and 100.']],
+        'page size above 100' => ['per_page=101', ['per_page' => 'The per page field must be between 1 and 100.']],
+        'text page size' => ['per_page=all', ['per_page' => 'The per page field must be an integer.']],
+    ]);
 
     it('lists the newest projects first by default', function () {
         $older = Project::factory()->create(['created_at' => now()->subDay()]);

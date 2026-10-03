@@ -14,7 +14,7 @@ use Illuminate\Http\Response;
 class ProjectController extends Controller
 {
     /**
-     * Display a listing of the projects, optionally searched, filtered and sorted.
+     * Display a page of projects, optionally searched, filtered and sorted.
      */
     public function index(ListProjectsRequest $request): AnonymousResourceCollection
     {
@@ -23,7 +23,8 @@ class ProjectController extends Controller
             ->when($request->validated('status'), fn (Builder $query, string $status) => $query->where('status', $status))
             ->when($request->validated('priority'), fn (Builder $query, string $priority) => $query->where('priority', $priority))
             ->sortBy($request->validated('sort') ?? '-created_at')
-            ->get();
+            ->paginate($request->perPage())
+            ->withQueryString();
 
         return ProjectResource::collection($projects);
     }
