@@ -1,10 +1,6 @@
 #!/bin/sh
 set -e
 
-# Prepare the app from its root, then start the command in the image's working directory.
-workdir="$(pwd)"
-cd /var/www/html
-
 # Bind-mounted source (development) may not have dependencies installed yet.
 if [ ! -f vendor/autoload.php ]; then
     composer install --no-interaction --prefer-dist
@@ -35,5 +31,4 @@ if php artisan tinker --execute 'echo \App\Models\User::query()->exists() ? "see
     php artisan db:seed --force
 fi
 
-cd "$workdir"
 exec "$@"

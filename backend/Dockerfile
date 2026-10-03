@@ -35,8 +35,9 @@ RUN composer dump-autoload
 # environment (DB_HOST, APP_KEY, ...) from the processes handling requests.
 ENV PHP_CLI_SERVER_WORKERS=4
 EXPOSE 8000
-WORKDIR /var/www/html/public
-CMD ["php", "-S", "0.0.0.0:8000", "../vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php"]
+# Laravel's router script expects to run from public/, but artisan commands
+# (`docker compose exec backend php artisan ...`) need the app root.
+CMD ["sh", "-c", "cd public && exec php -S 0.0.0.0:8000 ../vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php"]
 
 # ---------------------------------------------------------------------------
 # prod: production dependencies only, optimised autoloader, served by PHP-FPM
