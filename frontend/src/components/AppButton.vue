@@ -4,8 +4,9 @@ withDefaults(
     variant?: 'primary' | 'secondary' | 'danger' | 'ghost-light'
     type?: 'button' | 'submit'
     loading?: boolean
+    disabled?: boolean
   }>(),
-  { variant: 'primary', type: 'button', loading: false },
+  { variant: 'primary', type: 'button', loading: false, disabled: false },
 )
 
 const variants = {
@@ -19,7 +20,7 @@ const variants = {
 <template>
   <button
     :type="type"
-    :disabled="loading || undefined"
+    :disabled="loading || disabled || undefined"
     :aria-busy="loading || undefined"
     class="inline-flex items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60"
     :class="variants[variant]"
