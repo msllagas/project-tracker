@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Project;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -19,5 +20,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Demo User',
             'email' => 'demo@example.com',
         ]);
+
+        Project::factory()->count(15)->create();
     }
 }
