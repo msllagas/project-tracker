@@ -1,4 +1,4 @@
-import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
+import { flushPromises, mount, type DOMWrapper, type VueWrapper } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '@/api/client'
 import { createProject, updateProject } from '@/api/projects'
@@ -22,9 +22,14 @@ function mountDialog(project: Project | null = null) {
   return wrapper
 }
 
+/** A label's text without the required-field asterisk, which screen readers skip too. */
+function labelText(element: DOMWrapper<Element>): string {
+  return element.text().replace(/\s*\*$/, '')
+}
+
 /** The form control labelled `label`. */
 function field(dialog: VueWrapper, label: string) {
-  const labelElement = dialog.findAll('label').find((element) => element.text() === label)
+  const labelElement = dialog.findAll('label').find((element) => labelText(element) === label)
 
   return dialog.find(`#${CSS.escape(labelElement!.attributes('for')!)}`)
 }
@@ -44,6 +49,16 @@ afterEach(() => {
 })
 
 describe('ProjectFormDialog', () => {
+  it('marks the required fields with an asterisk', () => {
+    const dialog = mountDialog()
+    const marked = dialog
+      .findAll('label, legend')
+      .filter((element) => element.text().endsWith('*'))
+      .map(labelText)
+
+    expect(marked).toEqual(['Client name', 'Project name', 'Status', 'Priority'])
+  })
+
   it('creates a project and sends blank optional fields as null', async () => {
     const created = makeProject()
     createProjectMock.mockResolvedValue(created)

@@ -133,6 +133,7 @@ async function submit(): Promise<void> {
           <FormField
             v-slot="{ control }"
             label="Client name"
+            required
             :error="error?.fieldError('client_name')"
           >
             <input
@@ -146,7 +147,12 @@ async function submit(): Promise<void> {
             />
           </FormField>
 
-          <FormField v-slot="{ control }" label="Project name" :error="error?.fieldError('name')">
+          <FormField
+            v-slot="{ control }"
+            label="Project name"
+            required
+            :error="error?.fieldError('name')"
+          >
             <input
               v-bind="control"
               v-model="form.name"
@@ -161,7 +167,6 @@ async function submit(): Promise<void> {
         <FormField
           v-slot="{ control }"
           label="Description"
-          hint="Optional."
           :error="error?.fieldError('description')"
         >
           <textarea
@@ -174,8 +179,13 @@ async function submit(): Promise<void> {
         </FormField>
 
         <div class="grid gap-5 sm:grid-cols-2">
-          <FormField v-slot="{ control }" label="Status" :error="error?.fieldError('status')">
-            <select v-bind="control" v-model="form.status" class="field-control">
+          <FormField
+            v-slot="{ control }"
+            label="Status"
+            required
+            :error="error?.fieldError('status')"
+          >
+            <select v-bind="control" v-model="form.status" required class="field-control">
               <option v-for="status in PROJECT_STATUSES" :key="status" :value="status">
                 {{ STATUS_LABELS[status] }}
               </option>
@@ -183,7 +193,9 @@ async function submit(): Promise<void> {
           </FormField>
 
           <fieldset class="flex flex-col gap-1.5">
-            <legend class="mb-1.5 text-sm font-medium">Priority</legend>
+            <legend class="mb-1.5 text-sm font-medium">
+              Priority<span class="text-alert" aria-hidden="true"> *</span>
+            </legend>
             <div class="grid grid-cols-3 gap-2">
               <label
                 v-for="(priority, index) in PROJECT_PRIORITIES"
@@ -195,7 +207,13 @@ async function submit(): Promise<void> {
                     : 'border-rule bg-white hover:border-ink/40'
                 "
               >
-                <input v-model="form.priority" type="radio" :value="priority" class="sr-only" />
+                <input
+                  v-model="form.priority"
+                  type="radio"
+                  :value="priority"
+                  required
+                  class="sr-only"
+                />
                 <span class="inline-flex items-end gap-0.5" aria-hidden="true">
                   <span
                     v-for="bar in 3"
@@ -220,18 +238,12 @@ async function submit(): Promise<void> {
           <FormField
             v-slot="{ control }"
             label="Start date"
-            hint="Optional."
             :error="error?.fieldError('start_date')"
           >
             <input v-bind="control" v-model="form.start_date" type="date" class="field-control" />
           </FormField>
 
-          <FormField
-            v-slot="{ control }"
-            label="Due date"
-            hint="Optional. Can't be earlier than the start date."
-            :error="error?.fieldError('due_date')"
-          >
+          <FormField v-slot="{ control }" label="Due date" :error="error?.fieldError('due_date')">
             <input
               v-bind="control"
               v-model="form.due_date"
