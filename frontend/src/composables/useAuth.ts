@@ -1,7 +1,7 @@
 import { computed, readonly, ref } from 'vue'
 import * as authApi from '@/api/auth'
 import { ApiError } from '@/api/client'
-import type { LoginCredentials, RegistrationDetails, User } from '@/types'
+import type { LoginCredentials, User } from '@/types'
 
 const user = ref<User | null>(null)
 let userRequest: Promise<void> | null = null
@@ -30,11 +30,6 @@ async function login(credentials: LoginCredentials): Promise<void> {
   userRequest = Promise.resolve()
 }
 
-async function register(details: RegistrationDetails): Promise<void> {
-  user.value = await authApi.register(details)
-  userRequest = Promise.resolve()
-}
-
 async function logout(): Promise<void> {
   try {
     await authApi.logout()
@@ -55,7 +50,6 @@ export function useAuth() {
     isAuthenticated: computed(() => user.value !== null),
     loadUser,
     login,
-    register,
     logout,
     clearUser,
   }

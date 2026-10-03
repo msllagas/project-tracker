@@ -99,15 +99,6 @@ async function submit(): Promise<void> {
           Use the demo account
         </button>
       </p>
-      <p>
-        New here?
-        <RouterLink
-          :to="{ name: 'register' }"
-          class="font-semibold text-ink underline underline-offset-2"
-        >
-          Create an account
-        </RouterLink>
-      </p>
     </template>
   </AuthLayout>
 </template>

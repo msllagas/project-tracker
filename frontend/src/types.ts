@@ -70,12 +70,5 @@ export interface LoginCredentials {
   remember?: boolean
 }
 
-export interface RegistrationDetails {
-  name: string
-  email: string
-  password: string
-  password_confirmation: string
-}
-
 /** Laravel validation errors, keyed by field name. */
 export type ValidationErrors = Record<string, string[]>
