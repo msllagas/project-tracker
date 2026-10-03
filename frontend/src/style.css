@@ -1,1 +1,33 @@
 @import 'tailwindcss';
+@import '@fontsource-variable/archivo/wdth.css';
+
+@theme {
+  --font-sans: 'Archivo Variable', ui-sans-serif, system-ui, sans-serif;
+
+  --color-ink: #172036;
+  --color-ink-soft: #2b3757;
+  --color-paper: #f3f5f8;
+  --color-rule: #d9dee7;
+  --color-muted: #5b6478;
+  --color-marigold: #f5b400;
+  --color-alert: #b42318;
+}
+
+@layer base {
+  body {
+    @apply bg-paper font-sans text-ink antialiased;
+  }
+
+  /* Two-tone ring: ink reads on light surfaces, marigold on the ink header. */
+  :focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 2px var(--color-marigold);
+  }
+}
+
+@layer components {
+  .field-control {
+    @apply block w-full rounded-md border border-rule bg-white px-3 py-2 text-ink transition-colors placeholder:text-muted/70 hover:border-ink/40 aria-invalid:border-alert;
+  }
+}
