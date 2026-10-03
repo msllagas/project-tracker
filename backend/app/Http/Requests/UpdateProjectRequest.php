@@ -8,10 +8,12 @@ use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class ProjectRequest extends FormRequest
+class UpdateProjectRequest extends FormRequest
 {
     /**
-     * Get the validation rules that apply to the request.
+     * Get the validation rules for updating a project.
+     *
+     * PUT replaces the whole project, so every field is validated as on create.
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */

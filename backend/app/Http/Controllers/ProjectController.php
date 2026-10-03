@@ -3,7 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ListProjectsRequest;
-use App\Http\Requests\ProjectRequest;
+use App\Http\Requests\StoreProjectRequest;
+use App\Http\Requests\UpdateProjectRequest;
 use App\Http\Resources\ProjectResource;
 use App\Models\Project;
 use Illuminate\Database\Eloquent\Builder;
@@ -50,7 +51,7 @@ class ProjectController extends Controller
     /**
      * Store a newly created project.
      */
-    public function store(ProjectRequest $request): JsonResponse
+    public function store(StoreProjectRequest $request): JsonResponse
     {
         $project = Project::create($request->validated());
         $this->forgetCachedLists();
@@ -71,7 +72,7 @@ class ProjectController extends Controller
     /**
      * Update the specified project.
      */
-    public function update(ProjectRequest $request, Project $project): ProjectResource
+    public function update(UpdateProjectRequest $request, Project $project): ProjectResource
     {
         $project->update($request->validated());
         $this->forgetCachedLists();
