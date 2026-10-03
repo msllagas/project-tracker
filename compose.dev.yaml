@@ -12,6 +12,8 @@ services:
     environment:
       APP_ENV: local
       APP_DEBUG: "true"
+      # The host user has no home directory in the image; tools like tinker need one.
+      HOME: /tmp
     volumes:
       - ./backend:/var/www/html
     healthcheck:
